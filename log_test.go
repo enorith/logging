@@ -2,12 +2,11 @@ package logging_test
 
 import (
 	"fmt"
-	"net/url"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/enorith/logging"
 	"github.com/enorith/logging/writers"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -18,29 +17,15 @@ type Foo struct {
 }
 
 func TestZap(t *testing.T) {
-	zap.RegisterSink("rotate", func(u *url.URL) (zap.Sink, error) {
-		wd, _ := os.Getwd()
-
-		return writers.NewRotate(filepath.Join(wd, u.Path)), nil
+	wd, _ := os.Getwd()
+	logging.WithDefaults(logging.Config{
+		BaseDir: wd,
 	})
 
-	conf := zap.Config{
-		Level:             zap.NewAtomicLevelAt(zap.DebugLevel),
-		Development:       false,
-		DisableCaller:     false,
-		DisableStacktrace: false,
-		Encoding:          "json",
-		EncoderConfig: zapcore.EncoderConfig{
-			MessageKey:    "message",
-			LevelKey:      "level",
-			EncodeLevel:   zapcore.LowercaseLevelEncoder,
-			TimeKey:       "time",
-			EncodeTime:    zapcore.ISO8601TimeEncoder,
-			StacktraceKey: "trace",
-		},
-		OutputPaths:      []string{"rotate:///tmp/log.log", "stdout"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
+	conf := zap.NewProductionConfig()
+	conf.OutputPaths = []string{"rotate:///tmp/test.log?time_format=2006-01-02T15", "single:///tmp/single.log"}
+	conf.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	conf.ErrorOutputPaths = []string{"stderr"}
 	logger, _ := conf.Build()
 	defer logger.Sync()
 
@@ -52,7 +37,7 @@ func TestZap(t *testing.T) {
 }
 
 func TestRotate(t *testing.T) {
-	w := writers.NewRotate("tmp/test.log")
+	w := writers.NewRotateFile("tmp/test.log")
 	for i := 0; i < 10; i++ {
 		_, e := w.Write([]byte(fmt.Sprintf("%s hello\n", time.Now().Format("2006-01-02T15:04:05.999Z07:00"))))
 		if e != nil {
@@ -62,7 +47,7 @@ func TestRotate(t *testing.T) {
 }
 
 func Benchmark_Rotate(b *testing.B) {
-	w := writers.NewRotate("tmp/test.log")
+	w := writers.NewRotateFile("tmp/test.log")
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		_, e := w.Write([]byte(fmt.Sprintf("%s hello\n", time.Now().Format(time.RFC3339))))
@@ -70,4 +55,25 @@ func Benchmark_Rotate(b *testing.B) {
 			b.Error(e)
 		}
 	}
+}
+
+func TestManager(t *testing.T) {
+	wd, _ := os.Getwd()
+	logging.WithDefaults(logging.Config{
+		BaseDir: wd,
+	})
+	logging.DefaultManager.Resolve("default", func(conf zap.Config) (*zap.Logger, error) {
+		conf.OutputPaths = []string{"rotate:///tmp/enorith.log", "stdout"}
+		conf.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02T15:04:05.999")
+		conf.EncoderConfig.StacktraceKey = "trace"
+		return conf.Build()
+	})
+
+	logger, e := logging.DefaultManager.Channel()
+	if e != nil {
+		t.Error(e)
+		t.Fail()
+	}
+
+	logger.Error("test", zap.Int("answer", 42))
 }

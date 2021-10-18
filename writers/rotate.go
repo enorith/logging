@@ -11,26 +11,26 @@ import (
 
 var DefaultRotateTimeFormat = "2006-01-02"
 
-type RotateWriter struct {
+type RotateFileWriter struct {
 	lock                           sync.Mutex
 	filename, timeFormat, fileTime string
 
 	out *os.File
 }
 
-func NewRotate(filename string, timeFormat ...string) *RotateWriter {
+func NewRotateFile(filename string, timeFormat ...string) *RotateFileWriter {
 	var tf string
-	if len(timeFormat) > 0 {
+	if len(timeFormat) > 0 && timeFormat[0] != "" {
 		tf = timeFormat[0]
 	} else {
 		tf = DefaultRotateTimeFormat
 	}
 
-	return &RotateWriter{filename: filename, timeFormat: tf}
+	return &RotateFileWriter{filename: filename, timeFormat: tf}
 }
 
 // Write satisfies the io.Writer interface.
-func (w *RotateWriter) Write(output []byte) (int, error) {
+func (w *RotateFileWriter) Write(output []byte) (int, error) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	out, e := w.RotateWriterNoLock()
@@ -41,7 +41,7 @@ func (w *RotateWriter) Write(output []byte) (int, error) {
 	return out.Write(output)
 }
 
-func (w *RotateWriter) Close() error {
+func (w *RotateFileWriter) Close() error {
 	if w.out != nil {
 		return w.out.Close()
 	}
@@ -49,7 +49,7 @@ func (w *RotateWriter) Close() error {
 	return nil
 }
 
-func (w *RotateWriter) Sync() error {
+func (w *RotateFileWriter) Sync() error {
 	if w.out != nil {
 		return w.out.Sync()
 	}
@@ -57,7 +57,7 @@ func (w *RotateWriter) Sync() error {
 	return nil
 }
 
-func (w *RotateWriter) RotateWriterNoLock() (out *os.File, err error) {
+func (w *RotateFileWriter) RotateWriterNoLock() (out *os.File, err error) {
 	currentTime := time.Now().Format(w.timeFormat)
 	if w.out != nil && currentTime == w.fileTime {
 		return w.out, nil
@@ -86,7 +86,7 @@ func (w *RotateWriter) RotateWriterNoLock() (out *os.File, err error) {
 	name := realpath[0:dot]
 	realname := fmt.Sprintf("%s.%s%s", name, w.fileTime, ext)
 
-	out, err = os.OpenFile(realname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	out, err = os.OpenFile(realname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	w.out = out
 
 	return

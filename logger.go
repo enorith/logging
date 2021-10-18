@@ -1,16 +1,26 @@
 package logging
 
-//Logger interface, compatible with std logger
-type Logger interface {
-	Print(v ...interface{})
-	Printf(format string, v ...interface{})
-	Println(v ...interface{})
+import (
+	"net/url"
+	"os"
+	"path/filepath"
 
-	Fatal(v ...interface{})
-	Fatalf(format string, v ...interface{})
-	Fatalln(v ...interface{})
+	"github.com/enorith/logging/writers"
+	"go.uber.org/zap"
+)
 
-	Panic(v ...interface{})
-	Panicf(format string, v ...interface{})
-	Panicln(v ...interface{})
+type Config struct {
+	//BaseDir base directory of log files
+	BaseDir string
+}
+
+func WithDefaults(conf Config) {
+	zap.RegisterSink("rotate", func(u *url.URL) (zap.Sink, error) {
+		format := u.Query().Get("time_format")
+		return writers.NewRotateFile(filepath.Join(conf.BaseDir, u.Path), format), nil
+	})
+
+	zap.RegisterSink("single", func(u *url.URL) (zap.Sink, error) {
+		return os.OpenFile(filepath.Join(conf.BaseDir, u.Path), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+	})
 }
