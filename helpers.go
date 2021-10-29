@@ -11,7 +11,7 @@ func Debug(msg string, fields ...zap.Field) {
 }
 
 func Debugf(msg string, args ...interface{}) {
-	Debug(fmt.Sprintf(msg, args...))
+	WithOptions(zap.AddCallerSkip(1)).Debug(fmt.Sprintf(msg, args...))
 }
 
 func Info(msg string, fields ...zap.Field) {
@@ -19,7 +19,7 @@ func Info(msg string, fields ...zap.Field) {
 }
 
 func Infof(msg string, args ...interface{}) {
-	Info(fmt.Sprintf(msg, args...))
+	WithOptions(zap.AddCallerSkip(1)).Info(fmt.Sprintf(msg, args...))
 }
 
 func Warn(msg string, fields ...zap.Field) {
@@ -27,7 +27,7 @@ func Warn(msg string, fields ...zap.Field) {
 }
 
 func Warnf(msg string, args ...interface{}) {
-	Warn(fmt.Sprintf(msg, args...))
+	WithOptions(zap.AddCallerSkip(1)).Warn(fmt.Sprintf(msg, args...))
 }
 
 func Fatal(msg string, fields ...zap.Field) {
@@ -35,7 +35,7 @@ func Fatal(msg string, fields ...zap.Field) {
 }
 
 func Fatalf(msg string, args ...interface{}) {
-	Fatal(fmt.Sprintf(msg, args...))
+	WithOptions(zap.AddCallerSkip(1)).Fatal(fmt.Sprintf(msg, args...))
 }
 
 func Panic(msg string, fields ...zap.Field) {
@@ -43,7 +43,7 @@ func Panic(msg string, fields ...zap.Field) {
 }
 
 func Panicf(msg string, args ...interface{}) {
-	Panic(fmt.Sprintf(msg, args...))
+	WithOptions(zap.AddCallerSkip(1)).Panic(fmt.Sprintf(msg, args...))
 }
 
 func With(fields ...zap.Field) *zap.Logger {
