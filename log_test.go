@@ -76,4 +76,12 @@ func TestManager(t *testing.T) {
 	}
 
 	logger.Error("test", zap.Int("answer", 42))
+
+	logging.Info("info snappy")
+	logging.With(zap.String("foo", "bar")).Info("info snappy with")
+}
+
+func TestNil(t *testing.T) {
+	logging.NilLogger.Info("check")
+	logging.NilLogger.Error("check err")
 }

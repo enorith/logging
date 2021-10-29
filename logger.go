@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var NilLogger = NewNilLogger()
+
 type Config struct {
 	//BaseDir base directory of log files
 	BaseDir string
@@ -23,4 +25,13 @@ func WithDefaults(conf Config) {
 	zap.RegisterSink("single", func(u *url.URL) (zap.Sink, error) {
 		return os.OpenFile(filepath.Join(conf.BaseDir, u.Path), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	})
+}
+
+func NewNilLogger() *zap.Logger {
+	conf := zap.NewProductionConfig()
+
+	conf.OutputPaths = nil
+	conf.ErrorOutputPaths = nil
+	l, _ := conf.Build()
+	return l
 }
