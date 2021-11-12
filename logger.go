@@ -19,12 +19,20 @@ type Config struct {
 func WithDefaults(conf Config) {
 	zap.RegisterSink("rotate", func(u *url.URL) (zap.Sink, error) {
 		format := u.Query().Get("time_format")
+		makeDir(conf.BaseDir, u.Path)
+
 		return writers.NewRotateFile(filepath.Join(conf.BaseDir, u.Path), format), nil
 	})
 
 	zap.RegisterSink("single", func(u *url.URL) (zap.Sink, error) {
+		makeDir(conf.BaseDir, u.Path)
 		return os.OpenFile(filepath.Join(conf.BaseDir, u.Path), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	})
+}
+
+func makeDir(baseDir, path string) {
+	dir := filepath.Join(baseDir, filepath.Dir(path))
+	os.MkdirAll(dir, 0775)
 }
 
 func NewNilLogger() *zap.Logger {

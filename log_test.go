@@ -63,9 +63,10 @@ func TestManager(t *testing.T) {
 		BaseDir: wd,
 	})
 	logging.DefaultManager.Resolve("default", func(conf zap.Config) (*zap.Logger, error) {
-		conf.OutputPaths = []string{"rotate:///tmp/enorith.log", "stdout"}
+		conf.OutputPaths = []string{"rotate:///tmp/rotates/enorith.log", "stdout"}
 		conf.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02T15:04:05.999")
 		conf.EncoderConfig.StacktraceKey = "trace"
+		conf.Encoding = "console"
 		return conf.Build()
 	})
 
