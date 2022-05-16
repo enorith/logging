@@ -14,6 +14,8 @@ var FallbackLogger = NewNilLogger()
 type Config struct {
 	//BaseDir base directory of log files
 	BaseDir string
+	//Fallback logger when logger not found
+	Fallback *zap.Logger
 }
 
 func WithDefaults(conf Config) {
@@ -28,6 +30,10 @@ func WithDefaults(conf Config) {
 		makeDir(conf.BaseDir, u.Path)
 		return os.OpenFile(filepath.Join(conf.BaseDir, u.Path), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	})
+
+	if conf.Fallback != nil {
+		FallbackLogger = conf.Fallback
+	}
 }
 
 func makeDir(baseDir, path string) {
