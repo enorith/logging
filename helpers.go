@@ -30,6 +30,14 @@ func Warnf(msg string, args ...interface{}) {
 	WithOptions(zap.AddCallerSkip(1)).Warn(fmt.Sprintf(msg, args...))
 }
 
+func Error(msg string, fields ...zap.Field) {
+	WithOptions(zap.AddCallerSkip(1)).Error(msg, fields...)
+}
+
+func Errorf(msg string, args ...interface{}) {
+	WithOptions(zap.AddCallerSkip(1)).Error(fmt.Sprintf(msg, args...))
+}
+
 func Fatal(msg string, fields ...zap.Field) {
 	WithOptions(zap.AddCallerSkip(1)).Fatal(msg, fields...)
 }
@@ -59,5 +67,5 @@ func Channel(channel ...string) *zap.Logger {
 		return l
 	}
 
-	return NilLogger
+	return FallbackLogger
 }

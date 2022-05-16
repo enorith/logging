@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var NilLogger = NewNilLogger()
+var FallbackLogger = NewNilLogger()
 
 type Config struct {
 	//BaseDir base directory of log files
@@ -40,6 +40,15 @@ func NewNilLogger() *zap.Logger {
 
 	conf.OutputPaths = nil
 	conf.ErrorOutputPaths = nil
+	l, _ := conf.Build()
+	return l
+}
+
+func NewStdLogger() *zap.Logger {
+	conf := zap.NewProductionConfig()
+
+	conf.OutputPaths = []string{"stdout"}
+	conf.ErrorOutputPaths = []string{"stderr"}
 	l, _ := conf.Build()
 	return l
 }

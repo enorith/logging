@@ -84,6 +84,6 @@ func TestManager(t *testing.T) {
 }
 
 func TestNil(t *testing.T) {
-	logging.NilLogger.Info("check")
-	logging.NilLogger.Error("check err")
+	logging.FallbackLogger.Info("check")
+	logging.FallbackLogger.Error("check err")
 }
