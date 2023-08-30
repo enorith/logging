@@ -37,13 +37,15 @@ func TestZap(t *testing.T) {
 }
 
 func TestRotate(t *testing.T) {
-	w := writers.NewRotateFile("tmp/test.log")
+	w := writers.NewRotateFile("tmp/test.log", "2006-01-02T15 04 05")
 	for i := 0; i < 10; i++ {
 		_, e := w.Write([]byte(fmt.Sprintf("%s hello\n", time.Now().Format("2006-01-02T15:04:05.999Z07:00"))))
 		if e != nil {
 			t.Error(e)
 		}
 	}
+	w.SetLimit(5)
+	w.Cleanup()
 }
 
 func Benchmark_Rotate(b *testing.B) {
@@ -63,7 +65,7 @@ func TestManager(t *testing.T) {
 		BaseDir: wd,
 	})
 	logging.DefaultManager.Resolve("default", func(conf zap.Config) (*zap.Logger, error) {
-		conf.OutputPaths = []string{"rotate:///tmp/rotates/enorith.log", "stdout"}
+		conf.OutputPaths = []string{"rotate:///tmp/rotates/enorith.log?time_format=2006-01-02T15 04 05&limit=3", "stdout"}
 		conf.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02T15:04:05.999")
 		conf.EncoderConfig.StacktraceKey = "trace"
 		conf.Encoding = "console"
@@ -81,6 +83,9 @@ func TestManager(t *testing.T) {
 	logging.Info("info snappy")
 	logging.Infof("info snappy arg %s", "data")
 	logging.With(zap.String("foo", "bar")).Info("info snappy with")
+
+	logging.DefaultManager.Sync()
+	logging.DefaultManager.Cleanup()
 }
 
 func TestNil(t *testing.T) {

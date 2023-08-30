@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/enorith/logging/writers"
 	"go.uber.org/zap"
@@ -21,9 +22,13 @@ type Config struct {
 func WithDefaults(conf Config) {
 	zap.RegisterSink("rotate", func(u *url.URL) (zap.Sink, error) {
 		format := u.Query().Get("time_format")
+		l := u.Query().Get("limit")
+		limit, _ := strconv.Atoi(l)
 		makeDir(conf.BaseDir, u.Path)
 
-		return writers.NewRotateFile(filepath.Join(conf.BaseDir, u.Path), format), nil
+		rotate := writers.NewRotateFile(filepath.Join(conf.BaseDir, u.Path), format).SetLimit(limit)
+		DefaultManager.AddRotate(rotate)
+		return rotate, nil
 	})
 
 	zap.RegisterSink("single", func(u *url.URL) (zap.Sink, error) {

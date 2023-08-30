@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/enorith/logging/writers"
 	"go.uber.org/zap"
 )
 
@@ -16,6 +17,7 @@ var DefaultManager = NewManager()
 type Manager struct {
 	crs      map[string]ChannelRegister
 	channels map[string]*zap.Logger
+	rotates  []*writers.RotateFileWriter
 	using    string
 	mu       sync.RWMutex
 }
@@ -24,6 +26,7 @@ func NewManager() *Manager {
 	return &Manager{
 		crs:      make(map[string]ChannelRegister),
 		channels: make(map[string]*zap.Logger),
+		rotates:  make([]*writers.RotateFileWriter, 0),
 		using:    DefaultChannel,
 		mu:       sync.RWMutex{},
 	}
@@ -72,4 +75,22 @@ func (m *Manager) Using(defaultChannel string) *Manager {
 	m.using = defaultChannel
 
 	return m
+}
+
+func (m *Manager) AddRotate(r *writers.RotateFileWriter) *Manager {
+	m.rotates = append(m.rotates, r)
+
+	return m
+}
+
+func (m *Manager) Sync() {
+	for _, l := range m.channels {
+		l.Sync()
+	}
+}
+
+func (m *Manager) Cleanup() {
+	for _, r := range m.rotates {
+		r.Cleanup()
+	}
 }
